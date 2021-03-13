@@ -1,0 +1,25 @@
+{
+  "name": "filesystem-ts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/jest": "^26.0.20",
+    "fp-ts": "^2.9.5",
+    "io-ts": "^2.2.16",
+    "monocle-ts": "^2.3.9",
+    "newtype-ts": "^0.3.4",
+    "ts-jest": "^26.5.3",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.3"
+  },
+  "devDependencies": {
+    "@tsconfig/node14": "^1.0.0"
+  }
+}
