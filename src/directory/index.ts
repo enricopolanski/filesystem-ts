@@ -1,7 +1,7 @@
-import * as A from 'fp-ts/Array';
-import { promises, Dirent } from 'fs';
-import * as TE from 'fp-ts/TaskEither';
-import { flow, identity, pipe } from 'fp-ts/lib/function';
+import * as A from "fp-ts/Array";
+import { promises, Dirent } from "fs";
+import * as TE from "fp-ts/TaskEither";
+import { flow, identity, pipe } from "fp-ts/lib/function";
 import {
   NoEntity,
   NoEntityDecoder,
@@ -10,23 +10,24 @@ import {
   orUnknownError,
   unknownError,
   UnknownError,
-} from '../errors';
-import { Entity } from '../entities';
-import { fileFromDirent, isFile } from '../file';
-import { isSymLink, symLinkFromDirent } from '../symlink';
-import { resolve } from 'path';
-import * as D from 'io-ts/Decoder';
-import { basename } from 'path';
+} from "../errors";
+import { Entity } from "../entities";
+import { fileFromDirent, isFile } from "../file";
+import { isSymLink, symLinkFromDirent } from "../symlink";
+import { resolve } from "path";
+import * as D from "io-ts/Decoder";
+import { basename, join, sep } from "path";
+import { tmpdir } from "os";
 
 export interface Directory {
-  type: 'Directory';
+  type: "Directory";
   name: string;
   path: string;
   absolutePath: string;
 }
 
 export const DirectoryDecoder: D.Decoder<unknown, Directory> = D.struct({
-  type: D.literal('Directory'),
+  type: D.literal("Directory"),
   name: D.string,
   path: D.string,
   absolutePath: D.string,
@@ -38,7 +39,7 @@ export const directoryFromDirent: (pathInfo: {
   path: string;
   absolutePath: string;
 }) => (dirent: Dirent) => Directory = (pathInfo) => (dirent) => ({
-  type: 'Directory',
+  type: "Directory",
   name: dirent.name,
   path: pathInfo.path,
   absolutePath: pathInfo.absolutePath,
@@ -52,7 +53,7 @@ const readDir: (s: string) => TE.TaskEither<unknown, Dirent[]> = TE.tryCatchK(
   identity
 );
 
-const _mkdtemp = (prefix: string) => promises.mkdtemp(prefix);
+const _mkdtemp = (prefix: string) => promises.mkdtemp(tmpdir() + sep + prefix);
 
 const mkdtemp = TE.tryCatchK(_mkdtemp, identity);
 
@@ -71,8 +72,8 @@ export const listDirectory = (
 ): TE.TaskEither<NoEntity | NotADirectory | UnknownError, Entity[]> =>
   pipe(
     TE.Do,
-    TE.bind('absolutePath', () => TE.right(resolve(dir))),
-    TE.bind('path', () => TE.right(dir)),
+    TE.bind("absolutePath", () => TE.right(resolve(dir))),
+    TE.bind("path", () => TE.right(dir)),
     TE.chain((info) =>
       pipe(
         readDir(dir),
@@ -110,7 +111,7 @@ export const createTemporaryDirectory: (
   pipe(
     mkdtemp(prefix),
     TE.map((directoryPath) => ({
-      type: 'Directory' as 'Directory',
+      type: "Directory" as "Directory",
       path: directoryPath,
       absolutePath: directoryPath,
       name: basename(directoryPath),
