@@ -1,7 +1,7 @@
-import * as A from "fp-ts/Array";
-import { promises, Dirent } from "fs";
-import * as TE from "fp-ts/TaskEither";
-import { flow, identity, pipe } from "fp-ts/lib/function";
+import * as A from 'fp-ts/Array';
+import { promises, Dirent, Stats } from 'fs';
+import * as TE from 'fp-ts/TaskEither';
+import { flow, identity, pipe } from 'fp-ts/lib/function';
 import {
   NoEntity,
   NoEntityDecoder,
@@ -10,24 +10,24 @@ import {
   orUnknownError,
   unknownError,
   UnknownError,
-} from "../errors";
-import { Entity } from "../entities";
-import { fileFromDirent, isFile } from "../file";
-import { isSymLink, symLinkFromDirent } from "../symlink";
-import { resolve } from "path";
-import * as D from "io-ts/Decoder";
-import { basename, join, sep } from "path";
-import { tmpdir } from "os";
+} from '../errors';
+import { Entity } from '../entities';
+import { fileFromDirent, isFile } from '../file';
+import { isSymLink, symLinkFromDirent } from '../symlink';
+import { resolve } from 'path';
+import * as D from 'io-ts/Decoder';
+import { basename, sep } from 'path';
+import { tmpdir } from 'os';
 
 export interface Directory {
-  type: "Directory";
+  type: 'Directory';
   name: string;
   path: string;
   absolutePath: string;
 }
 
 export const DirectoryDecoder: D.Decoder<unknown, Directory> = D.struct({
-  type: D.literal("Directory"),
+  type: D.literal('Directory'),
   name: D.string,
   path: D.string,
   absolutePath: D.string,
@@ -35,32 +35,39 @@ export const DirectoryDecoder: D.Decoder<unknown, Directory> = D.struct({
 
 export const isDirectory = (dirent: Dirent): boolean => dirent.isDirectory();
 
-export const directoryFromDirent: (pathInfo: {
+export const directoryOf: (pathInfo: {
   path: string;
   absolutePath: string;
-}) => (dirent: Dirent) => Directory = (pathInfo) => (dirent) => ({
-  type: "Directory",
-  name: dirent.name,
+}) => (name: string) => Directory = (pathInfo) => (name) => ({
+  type: 'Directory',
+  name: name,
   path: pathInfo.path,
   absolutePath: pathInfo.absolutePath,
 });
 
+const fsPromiseToTE: <A, B>(
+  f: (a: A) => Promise<B>
+) => (a: A) => TE.TaskEither<unknown, B> = (f) => TE.tryCatchK(f, identity);
+
+const getName: (dirent: Dirent) => string = (dirent) => dirent.name;
+
 const _readDir: (s: string) => Promise<Dirent[]> = (s: string) =>
   promises.readdir(s, { withFileTypes: true });
 
-const readDir: (s: string) => TE.TaskEither<unknown, Dirent[]> = TE.tryCatchK(
-  _readDir,
-  identity
+const readDir: (s: string) => TE.TaskEither<unknown, Dirent[]> = fsPromiseToTE(
+  _readDir
 );
 
 const _mkdtemp = (prefix: string) => promises.mkdtemp(tmpdir() + sep + prefix);
 
-const mkdtemp = TE.tryCatchK(_mkdtemp, identity);
+const mkdtemp = fsPromiseToTE(_mkdtemp);
 
 const decodeListDirectoryError = pipe(
   D.union(NoEntityDecoder, NotADirectoryDecoder),
   orUnknownError
 );
+
+export const getMetadataError = decodeListDirectoryError;
 
 /**
  * Returns a `Task` with `Either` a list of all `Entity`s in `dir` or one of the following errors:
@@ -72,8 +79,8 @@ export const listDirectory = (
 ): TE.TaskEither<NoEntity | NotADirectory | UnknownError, Entity[]> =>
   pipe(
     TE.Do,
-    TE.bind("absolutePath", () => TE.right(resolve(dir))),
-    TE.bind("path", () => TE.right(dir)),
+    TE.bind('absolutePath', () => TE.right(resolve(dir))),
+    TE.bind('path', () => TE.right(dir)),
     TE.chain((info) =>
       pipe(
         readDir(dir),
@@ -82,7 +89,7 @@ export const listDirectory = (
           directories: pipe(
             dirents,
             A.filter(isDirectory),
-            A.map(directoryFromDirent(info))
+            A.map(flow(getName, directoryOf(info)))
           ),
           files: pipe(dirents, A.filter(isFile), A.map(fileFromDirent(info))),
           symLinks: pipe(
@@ -110,11 +117,14 @@ export const createTemporaryDirectory: (
 ) => TE.TaskEither<UnknownError, Directory> = (prefix) =>
   pipe(
     mkdtemp(prefix),
-    TE.map((directoryPath) => ({
-      type: "Directory" as "Directory",
-      path: directoryPath,
-      absolutePath: directoryPath,
-      name: basename(directoryPath),
-    })),
+    TE.map((path) =>
+      directoryOf({ path: path, absolutePath: path })(basename(path))
+    ),
     TE.mapLeft(unknownError)
   );
+
+const _stat = (s: string) => promises.stat(s, { bigint: false });
+
+const stat: (a: string) => TE.TaskEither<unknown, Stats> = fsPromiseToTE(_stat);
+
+export const getMetadata = flow(stat, TE.mapLeft(getMetadataError));

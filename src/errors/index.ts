@@ -33,6 +33,9 @@ export const NoEntityDecoder: D.Decoder<unknown, NoEntity> = pipe(
   }))
 );
 
+/**
+ * Represents a development-purpose error.
+ */
 export interface UnknownError extends FSError {
   type: 'UNKNOWN';
   message: string;
