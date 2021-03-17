@@ -59,6 +59,7 @@ export interface NotADirectory extends FSError {
   message: string;
 }
 
+
 export const NotADirectoryDecoder: D.Decoder<unknown, NotADirectory> = pipe(
   D.struct({
     errno: D.literal(-20),

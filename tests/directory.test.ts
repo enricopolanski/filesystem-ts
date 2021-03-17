@@ -10,15 +10,11 @@ describe("directory", () => {
       expect(directoryStats.isDirectory()).toBeTruthy();
 
       await rmdir(temporaryDirectory.right.absolutePath);
-      console.log("here");
       const ld = await listDirectory(temporaryDirectory.right.absolutePath)();
-      console.log('LOLOL');
       if (E.isLeft(ld)) {
-        console.log('LALAL')
         expect(ld.left.type).toBe("ENOENTS");
         done()
       } else {
-        expect(ld.right).toBe("ENOENT");
         done.fail(String(ld));
       }
     } else {
