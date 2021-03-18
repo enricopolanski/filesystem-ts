@@ -69,9 +69,12 @@ const decodeListDirectoryError = pipe(
   orUnknownError
 );
 
-export const getMetadataError = decodeListDirectoryError;
+const getMetadataError: (
+  i: unknown
+) => MetadataError = decodeListDirectoryError;
 
-type ListDirectoryError = NoEntity | NotADirectory | UnknownError
+type ListDirectoryError = NoEntity | NotADirectory | UnknownError;
+type MetadataError = ListDirectoryError;
 
 /**
  * Returns a `Task` with `Either` a list of all `Entity`s in `dir` or one of the following errors:
@@ -131,9 +134,14 @@ const _stat = (s: string) => promises.stat(s, { bigint: false });
 
 const stat: (a: string) => TE.TaskEither<unknown, Stats> = fsPromiseToTE(_stat);
 
-export const getMetadata = flow(stat, TE.mapLeft(getMetadataError));
+export const getMetadata: (
+  a: string
+) => TE.TaskEither<MetadataError, Stats> = flow(
+  stat,
+  TE.mapLeft(getMetadataError)
+);
 
-export const getDirectory = (s: string) =>
+const getDirectory = (s: string) =>
   pipe(
     getMetadata(s),
     TE.chain((stat) =>
