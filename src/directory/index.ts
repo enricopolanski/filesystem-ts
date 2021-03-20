@@ -159,4 +159,15 @@ const getDirectory = (s: string) =>
 /**
  * DANGEROUS: DON'T USE
  */
-export const isDirectory = flow(getDirectory, T.map(E.isRight));
+export const isDirectory: (s: string) => T.Task<boolean> = flow(getDirectory, T.map(E.isRight));
+
+const _mkdir = (s: string) => promises.mkdir(s);
+
+const mkdir = fsPromiseToTE(_mkdir);
+
+export const createDirectory: (s: string) => TE.TaskEither<UnknownError, void> = flow(mkdir, TE.mapLeft(unknownError));
+
+const _rmdir = (s: string) => promises.rmdir(s);
+const rmdir = fsPromiseToTE(_rmdir);
+
+export const removeDirectory: (s: string) => TE.TaskEither<UnknownError, void> = flow(rmdir, TE.mapLeft(unknownError));
