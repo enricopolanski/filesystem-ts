@@ -1,19 +1,9 @@
-import { isDirectory, listDirectory, createTemporaryDirectory, removeDirectory } from "../src/directory";
+import { isDirectory, listDirectory, createTemporaryDirectory, removeDirectory, createDirectory } from "../src/directory";
 import * as E from "fp-ts/Either";
-import { promises } from "fs";
+// import { promises } from "fs";
 
 describe("directory", () => {
-  it("should be able to tell wheter ./fixtures exist", async ()=> {
-    // should give the same results modeled on fs.stats
-  });
 
-  it.skip("should remove a freshly created folder", async ()=> {
-    const fixtures = __dirname + "/fixtures";
-    await promises.mkdir(fixtures);
-    let directoryExists = await  isDirectory(fixtures);
-    expect(directoryExists).toBe(true);
-  });
-  
   it("should create a temporary folder", async () => {
     
     const temporaryDirectory = await createTemporaryDirectory("test-")();
@@ -25,16 +15,37 @@ describe("directory", () => {
       
     let directoryExists = await isDirectory(absolutePath)(); 
 
-    expect(directoryExists).toBeTruthy();
+    expect(directoryExists).toBe(true);
       
     // remove the directory
     await removeDirectory(absolutePath)();
 
     directoryExists = await isDirectory(absolutePath)();
 
-    expect(directoryExists).toBeFalsy();
+    expect(directoryExists).toBe(false);
   });
+  
+  it("should create a freshly created folder", async () => {
+    const temporaryDirectory = await createTemporaryDirectory("test-")();
+    const absolutePath: string = (temporaryDirectory as any).right.absolutePath;
 
+    // create a "fixtures" directory inside temporaryDirectory
+    const fixturesPath = absolutePath + "/fixtures";
+    await createDirectory(fixturesPath)();
+    const fixturesExists = await isDirectory(fixturesPath)();
+    expect(fixturesExists).toBe(true)
+
+    // remove the "fixtures" directory inside temporaryDirectory
+    await removeDirectory(fixturesPath)();
+    const fixturesExistsAfterDelete = await isDirectory(fixturesPath)();
+    expect(fixturesExistsAfterDelete).toBe(false);
+
+    // delete the temporaryDirectory for cleanup
+    await removeDirectory(absolutePath)();
+    const directoryExists = await isDirectory(absolutePath)();
+    expect(directoryExists).toBe(false);
+  });
+  
   it.skip("should return the contents of /fixtures", async () => {
     const result = await listDirectory("./tests/fixtures")();
     expect(E.isRight(result)).toBe(true);
