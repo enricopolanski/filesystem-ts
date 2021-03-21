@@ -9,6 +9,8 @@ import {
   NoEntityDecoder,
   NotADirectory,
   NotADirectoryDecoder,
+  NotEmptyDirectory,
+  NotEmptyDirectoryDecoder,
   orUnknownError,
   unknownError,
   UnknownError,
@@ -165,9 +167,19 @@ const _mkdir = (s: string) => promises.mkdir(s);
 
 const mkdir = fsPromiseToTE(_mkdir);
 
-export const createDirectory: (s: string) => TE.TaskEither<UnknownError, void> = flow(mkdir, TE.mapLeft(unknownError));
+type CreateDirectoryError = UnknownError;
+
+/**
+ * Creates a new empty directory at the provided path `s
+ */
+export const createDirectory: (s: string) => TE.TaskEither<CreateDirectoryError, void> = flow(mkdir, TE.mapLeft(unknownError));
 
 const _rmdir = (s: string) => promises.rmdir(s);
 const rmdir = fsPromiseToTE(_rmdir);
 
-export const removeDirectory: (s: string) => TE.TaskEither<UnknownError, void> = flow(rmdir, TE.mapLeft(unknownError));
+type RemoveDirectoryError = NotEmptyDirectory | UnknownError;
+
+const removeDirectoryError = pipe(NotEmptyDirectoryDecoder, orUnknownError);
+
+export const removeDirectory: (s: string) => TE.TaskEither<RemoveDirectoryError, void> = flow(rmdir, TE.mapLeft(removeDirectoryError));
+
