@@ -5,7 +5,7 @@ import * as E from 'fp-ts/Either';
  * Basic Error interface used for File System operation.
  * All File System errors extend this interface.
  */
-type FSErrorCode = 'ENOENT' | 'UNKNOWN' | 'ENOTDIR';
+type FSErrorCode = 'ENOENT' | 'UNKNOWN' | 'ENOTDIR' | 'ENOTEMPTY';
 
 export interface FSError {
   type: FSErrorCode;
@@ -84,3 +84,25 @@ export const NotADirectoryInputDecoder: D.Decoder<
   syscall: D.string,
   type: D.literal('ENOTDIR'),
 });
+
+export interface NotEmptyDirectory extends FSError {
+  type: 'ENOTEMPTY';
+  path: string;
+  syscall: string;
+  message: string;
+}
+
+export const NotEmptyDirectoryDecoder: D.Decoder<
+  unknown,
+  NotEmptyDirectory 
+> = pipe( D.struct({
+    errno: D.literal(-66),
+    code: D.literal('ENOTEMPTY'),
+    syscall: D.string,
+    path: D.string,
+  }), D.map((enoent) => ({
+    message: enoent.path + ' is NOT an empty Directory',
+    path: enoent.path,
+    syscall: enoent.syscall,
+    type: enoent.code,
+  })))
