@@ -172,7 +172,12 @@ type CreateDirectoryError = UnknownError;
 /**
  * Creates a new empty directory at the provided path `s
  */
-export const createDirectory: (s: string) => TE.TaskEither<CreateDirectoryError, void> = flow(mkdir, TE.mapLeft(unknownError));
+export const createDirectory: (s: string) => TE.TaskEither<CreateDirectoryError, Directory> = s => pipe(mkdir(s), TE.mapLeft(unknownError), TE.map(() => ({
+  type: "Directory",
+  path: s,
+  name: basename(s),
+  absolutePath: s
+})));
 
 const _rmdir = (s: string) => promises.rmdir(s);
 const rmdir = fsPromiseToTE(_rmdir);

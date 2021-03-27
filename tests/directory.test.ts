@@ -25,13 +25,18 @@ describe("directory", () => {
     expect(directoryExists).toBe(false);
   });
   
-  it("should create a freshly created folder", async () => {
+  it("should create a directory inside the os' temporary folder", async () => {
     const temporaryDirectory = await createTemporaryDirectory("test-")();
     const absolutePath: string = (temporaryDirectory as any).right.absolutePath;
 
     // create a "fixtures" directory inside temporaryDirectory
     const fixturesPath = absolutePath + "/fixtures";
-    await createDirectory(fixturesPath)();
+    const fixtures = await createDirectory(fixturesPath)();
+
+    // test the returned type 
+    expect(fixtures).toStrictEqual(E.right({ type: "Directory", path: fixturesPath, absolutePath: fixturesPath , name: 'fixtures', }));
+
+    // test the folder exists
     const fixturesExists = await isDirectory(fixturesPath)();
     expect(fixturesExists).toBe(true)
 
