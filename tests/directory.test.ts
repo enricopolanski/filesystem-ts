@@ -27,32 +27,6 @@ describe("directory", () => {
     expect(directoryExists).toBe(false);
   });
   
-  it("should create a directory inside the os' temporary folder", async () => {
-    const temporaryDirectory = await createTemporaryDirectory("test-")();
-    const absolutePath: string = (temporaryDirectory as any).right.absolutePath;
-
-    // create a "fixtures" directory inside temporaryDirectory
-    const fixturesPath = absolutePath + "/fixtures";
-    const fixtures = await createDirectory(fixturesPath)();
-
-    // test the returned type 
-    expect(fixtures).toStrictEqual(E.right({ type: "Directory", path: fixturesPath, absolutePath: fixturesPath , name: 'fixtures', }));
-
-    // test the folder exists
-    const fixturesExists = await isDirectory(fixturesPath)();
-    expect(fixturesExists).toBe(true)
-
-    // remove the "fixtures" directory inside temporaryDirectory
-    await removeDirectory(fixturesPath)();
-    const fixturesExistsAfterDelete = await isDirectory(fixturesPath)();
-    expect(fixturesExistsAfterDelete).toBe(false);
-
-    // delete the temporaryDirectory for cleanup
-    await removeDirectory(absolutePath)();
-    const directoryExists = await isDirectory(absolutePath)();
-    expect(directoryExists).toBe(false);
-  });
-  
   it.skip("should return the contents of /fixtures", async () => {
     const result = await listDirectory("./tests/fixtures")();
     expect(E.isRight(result)).toBe(true);
@@ -78,12 +52,25 @@ describe("directory", () => {
 describe('createDirectory', ()=> {
   it('should create a directory', async ()=> {
     const test = await pipe(
-      TE.right({}),
+      TE.Do,
       TE.apS('temporaryDirectory', createTemporaryDirectory("test-")),
       TE.bind('fixtures', ({ temporaryDirectory }) => createDirectory(temporaryDirectory.absolutePath + '/fixtures')),
-      TE.chainFirst(dirs => 
-        TE.right(expect(dirs).toBe(false))
-      )
-    )()
-  })
+      TE.chainFirst(({ fixtures }) => removeDirectory(fixtures.absolutePath)),
+      TE.chainFirst(result => removeDirectory(result.temporaryDirectory.absolutePath)),
+    )();
+
+    const desiredResult = {
+      _tag: "Right",
+      right: {
+        fixtures: {
+          absolutePath: expect.stringContaining("fixtures"),
+	  name: "fixtures",
+	  path: expect.stringContaining("fixtures"),
+	  type: "Directory",
+	}
+      }
+    }
+
+    expect(test).toMatchObject(desiredResult);
+  });
 })
