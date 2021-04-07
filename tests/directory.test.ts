@@ -1,5 +1,7 @@
 import { isDirectory, listDirectory, createTemporaryDirectory, removeDirectory, createDirectory } from "../src/directory";
 import * as E from "fp-ts/Either";
+import * as TE from "fp-ts/TaskEither";
+import { pipe } from "fp-ts/function";
 // import { promises } from "fs";
 
 describe("directory", () => {
@@ -72,3 +74,16 @@ describe("directory", () => {
     }
   });
 });
+
+describe('createDirectory', ()=> {
+  it('should create a directory', async ()=> {
+    const test = await pipe(
+      TE.right({}),
+      TE.apS('temporaryDirectory', createTemporaryDirectory("test-")),
+      TE.bind('fixtures', ({ temporaryDirectory }) => createDirectory(temporaryDirectory.absolutePath + '/fixtures')),
+      TE.chainFirst(dirs => 
+        TE.right(expect(dirs).toBe(false))
+      )
+    )()
+  })
+})
