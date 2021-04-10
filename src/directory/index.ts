@@ -79,12 +79,10 @@ type ListDirectoryError = NoEntity | NotADirectory | UnknownError;
 type MetadataError = ListDirectoryError;
 
 /**
- * Returns a `Task` with `Either` a list of all `Entity`s in `dir` or one of the following errors:
- * - `NoEntity`: given `dir` does not exist
- * - `UnknownError`: WIP
+ * Returns a list of all `Entity`s in `pathname`
  */
 export const listDirectory = (
-  s: string
+  pathname: string
 ): TE.TaskEither<ListDirectoryError, Entity[]> =>
   pipe(
     TE.Do,
@@ -136,8 +134,11 @@ const _stat = (s: string) => promises.stat(s, { bigint: false });
 
 const stat: (a: string) => TE.TaskEither<unknown, Stats> = fsPromiseToTE(_stat);
 
+/**
+ * Retrieves information about the file pointed to by `pathname`
+ */
 export const getMetadata: (
-  a: string
+  pathname: string
 ) => TE.TaskEither<MetadataError, Stats> = flow(
   stat,
   TE.mapLeft(getMetadataError)
@@ -161,7 +162,7 @@ const getDirectory = (s: string) =>
 /**
  * DANGEROUS: DON'T USE
  */
-export const isDirectory: (s: string) => T.Task<boolean> = flow(getDirectory, T.map(E.isRight));
+const isDirectory: (s: string) => T.Task<boolean> = flow(getDirectory, T.map(E.isRight));
 
 const _mkdir = (s: string) => promises.mkdir(s);
 
@@ -172,7 +173,7 @@ type CreateDirectoryError = UnknownError;
 /**
  * Creates a new empty directory at the provided path `s
  */
-export const createDirectory: (s: string) => TE.TaskEither<CreateDirectoryError, Directory> = s => pipe(mkdir(s), TE.mapLeft(unknownError), TE.map(() => ({
+export const createDirectory: (pathname: string) => TE.TaskEither<CreateDirectoryError, Directory> = s => pipe(mkdir(s), TE.mapLeft(unknownError), TE.map(() => ({
   type: "Directory",
   path: s,
   name: basename(s),
@@ -189,7 +190,13 @@ type RemoveDirectoryError = NotEmptyDirectory | UnknownError;
 
 const removeDirectoryError = pipe(NotEmptyDirectoryDecoder, orUnknownError);
 
-export const removeDirectory: (s: string) => TE.TaskEither<RemoveDirectoryError, void> = flow(rmdir, TE.mapLeft(removeDirectoryError));
+/*
+ * Removes an existing directory `pathname`. The operation may, and will likely fail if removal constraints are unmet (e.g. the directory not being empty will likely not be removable).
+ */
+export const removeDirectory: (pathname: string) => TE.TaskEither<RemoveDirectoryError, void> = flow(rmdir, TE.mapLeft(removeDirectoryError));
 
+/*
+ * Removes an existing directory `dir` together with its contents and subdirectories. Similar to `rm -rf`.
+ */
 export const removeDirectoryRecursive : (s: string) => TE.TaskEither<RemoveDirectoryError, void> = flow(rmdirReducursive, TE.mapLeft(removeDirectoryError));
 

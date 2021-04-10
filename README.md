@@ -1,6 +1,6 @@
 # FileSystem-ts
 
-Experimental, work-in-progress, filesystem library.
+Experimental, **work-in-progress**, filesystem library.
 
 Inspired by:
 
@@ -13,8 +13,6 @@ Inspired by:
 ### Directory
 
 - `listDirectory` 
-
-Returns a list of all entries in dir without the special entries (. and ..)
 
 ```ts
 const listDirectory: (s: string) => TaskEither<ListDirectoryError, Entity[]>
