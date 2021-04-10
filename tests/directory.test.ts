@@ -49,6 +49,15 @@ describe("directory", () => {
   });
 });
 
+/*
+const helper: <A,B>(test: TE.TaskEither<A, B>) => TE.TaskEither<{result: TE.TaskEither<A,B> }> 
+  = test => pipe(
+    TE.Do,
+    TE.apS('temporaryDirectory', createTemporaryDirectory("test-")),
+    TE.chainFirst(result => removeDirectory(result.temporaryDirectory.absolutePath)),
+  )
+*/
+
 describe('createDirectory', ()=> {
   it('should create a directory', async ()=> {
     const test = await pipe(
@@ -59,18 +68,14 @@ describe('createDirectory', ()=> {
       TE.chainFirst(result => removeDirectory(result.temporaryDirectory.absolutePath)),
     )();
 
-    const desiredResult = {
-      _tag: "Right",
-      right: {
+    const desiredResult = E.right({
         fixtures: {
           absolutePath: expect.stringContaining("fixtures"),
 	  name: "fixtures",
 	  path: expect.stringContaining("fixtures"),
 	  type: "Directory",
 	}
-      }
-    }
-
+      })
     expect(test).toMatchObject(desiredResult);
   });
 })

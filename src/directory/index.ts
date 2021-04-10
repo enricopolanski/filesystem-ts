@@ -182,9 +182,14 @@ export const createDirectory: (s: string) => TE.TaskEither<CreateDirectoryError,
 const _rmdir = (s: string) => promises.rmdir(s);
 const rmdir = fsPromiseToTE(_rmdir);
 
+const _rmdirRecursive = (s: string) => promises.rmdir(s, {recursive: true});
+const rmdirReducursive = fsPromiseToTE(_rmdirRecursive);
+
 type RemoveDirectoryError = NotEmptyDirectory | UnknownError;
 
 const removeDirectoryError = pipe(NotEmptyDirectoryDecoder, orUnknownError);
 
 export const removeDirectory: (s: string) => TE.TaskEither<RemoveDirectoryError, void> = flow(rmdir, TE.mapLeft(removeDirectoryError));
+
+export const removeDirectoryRecursive : (s: string) => TE.TaskEither<RemoveDirectoryError, void> = flow(rmdirReducursive, TE.mapLeft(removeDirectoryError));
 
