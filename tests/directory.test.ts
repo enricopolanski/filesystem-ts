@@ -1,4 +1,4 @@
-import { isDirectory, listDirectory, createTemporaryDirectory, removeDirectory, createDirectory } from "../src/directory";
+import { isDirectory, listDirectory, createTemporaryDirectory, removeDirectory, removeDirectoryRecursive, createDirectory } from "../src/directory";
 import * as E from "fp-ts/Either";
 import * as TE from "fp-ts/TaskEither";
 import { pipe } from "fp-ts/function";
@@ -50,10 +50,11 @@ describe("directory", () => {
 });
 
 /*
-const helper: <A,B>(test: TE.TaskEither<A, B>) => TE.TaskEither<{result: TE.TaskEither<A,B> }> 
+const withSetup: <A,B>(test: (s: string) => TE.TaskEither<A, B>) => TE.TaskEither<{result: TE.TaskEither<unknown, B> }> 
   = test => pipe(
     TE.Do,
     TE.apS('temporaryDirectory', createTemporaryDirectory("test-")),
+    TE.bind('result', ({ temporaryDirectory }) => test(temporaryDirectory.absolutePath)),
     TE.chainFirst(result => removeDirectory(result.temporaryDirectory.absolutePath)),
   )
 */
@@ -64,8 +65,7 @@ describe('createDirectory', ()=> {
       TE.Do,
       TE.apS('temporaryDirectory', createTemporaryDirectory("test-")),
       TE.bind('fixtures', ({ temporaryDirectory }) => createDirectory(temporaryDirectory.absolutePath + '/fixtures')),
-      TE.chainFirst(({ fixtures }) => removeDirectory(fixtures.absolutePath)),
-      TE.chainFirst(result => removeDirectory(result.temporaryDirectory.absolutePath)),
+      TE.chainFirst(result => removeDirectoryRecursive(result.temporaryDirectory.absolutePath)),
     )();
 
     const desiredResult = E.right({
