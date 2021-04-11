@@ -86,11 +86,11 @@ export const listDirectory = (
 ): TE.TaskEither<ListDirectoryError, Entity[]> =>
   pipe(
     TE.Do,
-    TE.bind("absolutePath", () => TE.right(resolve(s))),
-    TE.bind("path", () => TE.right(s)),
+    TE.bind("absolutePath", () => TE.right(resolve(pathname))),
+    TE.bind("path", () => TE.right(pathname)),
     TE.chain((info) =>
       pipe(
-        readDir(s),
+        readDir(pathname),
         TE.mapLeft(decodeListDirectoryError),
         TE.map((dirents) => ({
           directories: pipe(
@@ -162,7 +162,7 @@ const getDirectory = (s: string) =>
 /**
  * DANGEROUS: DON'T USE
  */
-const isDirectory: (s: string) => T.Task<boolean> = flow(getDirectory, T.map(E.isRight));
+export const isDirectory: (s: string) => T.Task<boolean> = flow(getDirectory, T.map(E.isRight));
 
 const _mkdir = (s: string) => promises.mkdir(s);
 
