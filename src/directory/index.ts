@@ -23,6 +23,9 @@ import * as D from "io-ts/Decoder";
 import { basename, sep } from "path";
 import { tmpdir } from "os";
 
+/**
+ * Data type representing a `Directory` entity in the filesystem.
+ */ 
 export interface Directory {
   type: "Directory";
   name: string;
@@ -30,6 +33,9 @@ export interface Directory {
   absolutePath: string;
 }
 
+/**
+ * Decodes given input, returning Either a Directory or a decode error.
+ */
 export const DirectoryDecoder: D.Decoder<unknown, Directory> = D.struct({
   type: D.literal("Directory"),
   name: D.string,
@@ -39,6 +45,9 @@ export const DirectoryDecoder: D.Decoder<unknown, Directory> = D.struct({
 
 const _isDirectory = (dirent: Dirent): boolean => dirent.isDirectory();
 
+/**
+ * Type constructor for a `Directory` type.
+ */
 export const directoryOf: (pathInfo: {
   path: string;
   absolutePath: string;
@@ -160,9 +169,9 @@ const getDirectory = (s: string) =>
   );
 
 /**
- * DANGEROUS: DON'T USE
+ * Checks if given `pathname` is a directory.
  */
-export const isDirectory: (s: string) => T.Task<boolean> = flow(getDirectory, T.map(E.isRight));
+export const isDirectory: (pathname: string) => T.Task<boolean> = flow(getDirectory, T.map(E.isRight));
 
 const _mkdir = (s: string) => promises.mkdir(s);
 
@@ -171,7 +180,7 @@ const mkdir = fsPromiseToTE(_mkdir);
 type CreateDirectoryError = UnknownError;
 
 /**
- * Creates a new empty directory at the provided path `s
+ * Creates a new empty directory at the provided `pathname`.
  */
 export const createDirectory: (pathname: string) => TE.TaskEither<CreateDirectoryError, Directory> = s => pipe(mkdir(s), TE.mapLeft(unknownError), TE.map(() => ({
   type: "Directory",
