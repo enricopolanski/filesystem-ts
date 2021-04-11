@@ -190,12 +190,12 @@ type RemoveDirectoryError = NotEmptyDirectory | UnknownError;
 
 const removeDirectoryError = pipe(NotEmptyDirectoryDecoder, orUnknownError);
 
-/*
+/**
  * Removes an existing directory `pathname`. The operation may, and will likely fail if removal constraints are unmet (e.g. the directory not being empty will likely not be removable).
  */
 export const removeDirectory: (pathname: string) => TE.TaskEither<RemoveDirectoryError, void> = flow(rmdir, TE.mapLeft(removeDirectoryError));
 
-/*
+/**
  * Removes an existing directory `dir` together with its contents and subdirectories. Similar to `rm -rf`.
  */
 export const removeDirectoryRecursive : (s: string) => TE.TaskEither<RemoveDirectoryError, void> = flow(rmdirReducursive, TE.mapLeft(removeDirectoryError));
