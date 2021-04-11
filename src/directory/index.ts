@@ -88,7 +88,7 @@ type ListDirectoryError = NoEntity | NotADirectory | UnknownError;
 type MetadataError = ListDirectoryError;
 
 /**
- * Returns a list of all `Entity`s in `pathname`
+ * Returns a list of all `Entity`s in `path`
  */
 export const listDirectory = (
   path: string
@@ -144,7 +144,7 @@ const _stat = (path: string) => promises.stat(path, { bigint: false });
 const stat: (path: string) => TE.TaskEither<unknown, Stats> = fsPromiseToTE(_stat);
 
 /**
- * Retrieves information about the file pointed to by `pathname`
+ * Retrieves information about the file pointed to by `path`
  */
 export const getMetadata: (
   path: string
@@ -169,7 +169,7 @@ const getDirectory = (path: string) =>
   );
 
 /**
- * Checks if given `pathname` is a directory.
+ * Checks if given `path` is a directory.
  */
 export const isDirectory: (path: string) => T.Task<boolean> = flow(getDirectory, T.map(E.isRight));
 
@@ -180,7 +180,7 @@ const mkdir = fsPromiseToTE(_mkdir);
 type CreateDirectoryError = UnknownError;
 
 /**
- * Creates a new empty directory at the provided `pathname`.
+ * Creates a new empty directory at the provided `path`.
  */
 export const createDirectory: (path: string) => TE.TaskEither<CreateDirectoryError, Directory> = path => pipe(mkdir(path), TE.mapLeft(unknownError), TE.map(() => ({
   type: "Directory",
@@ -200,7 +200,7 @@ type RemoveDirectoryError = NotEmptyDirectory | UnknownError;
 const removeDirectoryError = pipe(NotEmptyDirectoryDecoder, orUnknownError);
 
 /**
- * Removes an existing directory `pathname`. The operation may, and will likely fail if removal constraints are unmet (e.g. the directory not being empty will likely not be removable).
+ * Removes an existing directory `path`. The operation may, and will likely fail if removal constraints are unmet (e.g. the directory not being empty will likely not be removable).
  */
 export const removeDirectory: (path: string) => TE.TaskEither<RemoveDirectoryError, void> = flow(rmdir, TE.mapLeft(removeDirectoryError));
 
